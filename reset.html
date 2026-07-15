@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Spotted — Reset password</title>
+  <style>
+    :root { color-scheme: light; }
+    body { min-height: 100vh; margin: 0; display: flex; align-items: center; justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #faf5ec; color: #2b2620; padding: 24px; }
+    .card { width: 100%; max-width: 380px; text-align: center; }
+    .mark { font-size: 2.5rem; }
+    h1 { font-size: 1.5rem; margin: 10px 0 4px; }
+    p { line-height: 1.55; color: #5a534a; }
+    form { display: none; margin-top: 18px; text-align: left; }
+    label { font-size: 0.85rem; color: #5a534a; }
+    input { width: 100%; box-sizing: border-box; padding: 12px 14px; margin: 6px 0 14px;
+      border: 1.5px solid #d8cfbf; border-radius: 12px; font-size: 1rem; background: #fff; }
+    button { width: 100%; padding: 14px; border: 0; border-radius: 12px; background: #c0653f;
+      color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; }
+    button:disabled { opacity: 0.6; }
+    .msg { margin-top: 12px; font-size: 0.9rem; min-height: 1.2em; }
+    .err { color: #b3402a; }
+    .ok { color: #2e7d55; }
+    .accent { color: #c0653f; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="mark">🐾</div>
+    <h1 id="title">Reset your password</h1>
+    <p id="lead">One moment…</p>
+
+    <form id="form" onsubmit="return submitPw(event)">
+      <label for="pw">New password</label>
+      <input id="pw" type="password" autocomplete="new-password" minlength="6" required />
+      <label for="pw2">Confirm new password</label>
+      <input id="pw2" type="password" autocomplete="new-password" minlength="6" required />
+      <button id="btn" type="submit">Set new password</button>
+    </form>
+
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'https://mtteuvavhbpxfudzsdtc.supabase.co';
+    const SUPABASE_ANON = 'sb_publishable_FQT2TpnrglYBRtXqY3a5pw_hcpZDiHz';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+      auth: { detectSessionInUrl: true, persistSession: false, flowType: 'implicit' },
+    });
+
+    const $ = (id) => document.getElementById(id);
+    const setMsg = (t, cls) => { const m = $('msg'); m.textContent = t || ''; m.className = 'msg ' + (cls || ''); };
+
+    let hasSession = false;
+    sb.auth.onAuthStateChange((_event, session) => {
+      if (session && !hasSession) {
+        hasSession = true;
+        $('lead').textContent = 'Choose a new password for your Spotted account.';
+        $('form').style.display = 'block';
+      }
+    });
+
+    // If the recovery link didn't produce a session (expired / already used), say so.
+    setTimeout(() => {
+      if (!hasSession) {
+        $('title').textContent = 'Link expired';
+        $('lead').textContent = 'This reset link is invalid or has already been used. Request a new one from the Spotted app.';
+      }
+    }, 3500);
+
+    async function submitPw(e) {
+      e.preventDefault();
+      const pw = $('pw').value, pw2 = $('pw2').value;
+      if (pw.length < 6) return setMsg('Password must be at least 6 characters.', 'err'), false;
+      if (pw !== pw2) return setMsg('Passwords do not match.', 'err'), false;
+      $('btn').disabled = true;
+      setMsg('Saving…');
+      const { error } = await sb.auth.updateUser({ password: pw });
+      if (error) { setMsg(error.message, 'err'); $('btn').disabled = false; }
+      else {
+        $('form').style.display = 'none';
+        $('title').textContent = 'Password updated';
+        $('lead').textContent = 'Your password has been changed. Open the Spotted app and log in with your new password.';
+        setMsg('Done ✅', 'ok');
+      }
+      return false;
+    }
+  </script>
+</body>
+</html>
