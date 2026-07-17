@@ -20,6 +20,8 @@
     button { width: 100%; padding: 14px; border: 0; border-radius: 12px; background: #c0653f;
       color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; }
     button:disabled { opacity: 0.6; }
+    .showpw { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: #5a534a; margin: -4px 0 16px; cursor: pointer; }
+    .showpw input { width: auto; margin: 0; }
     .msg { margin-top: 12px; font-size: 0.9rem; min-height: 1.2em; }
     .err { color: #b3402a; }
     .ok { color: #2e7d55; }
@@ -37,6 +39,7 @@
       <input id="pw" type="password" autocomplete="new-password" minlength="6" required />
       <label for="pw2">Confirm new password</label>
       <input id="pw2" type="password" autocomplete="new-password" minlength="6" required />
+      <label class="showpw"><input type="checkbox" id="showpw" onchange="toggleShow()" /> Show password</label>
       <button id="btn" type="submit">Set new password</button>
     </form>
 
@@ -53,6 +56,12 @@
 
     const $ = (id) => document.getElementById(id);
     const setMsg = (t, cls) => { const m = $('msg'); m.textContent = t || ''; m.className = 'msg ' + (cls || ''); };
+
+    function toggleShow() {
+      const type = $('showpw').checked ? 'text' : 'password';
+      $('pw').type = type;
+      $('pw2').type = type;
+    }
 
     let hasSession = false;
     sb.auth.onAuthStateChange((_event, session) => {
